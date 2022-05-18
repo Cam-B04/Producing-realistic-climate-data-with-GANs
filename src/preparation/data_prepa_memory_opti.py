@@ -4,7 +4,7 @@ import h5netcdf
 import netCDF4
 import numpy as np
 
-
+nc_file = '../../../../PLASIM/postprocessor/data_plasim_50.nc'
 
 #with h5netcdf.File('./mydata100yplasim.nc', 'r') as f:
 class HDF5Store(object):
@@ -47,10 +47,12 @@ class HDF5Store(object):
             dset[self.i] = [values]
             self.i += 1
             h5f.flush()
+
+
 def process_ncdf_file(chans ):
 	L = ['ta','ua','va','zeta','ps']
 	data = np.zeros((36524,21, 64, 128))
-	fn = netCDF4.Dataset('./mydata100yplasim.nc', 'r')
+	fn = netCDF4.Dataset(nc_file, 'r')
 	print(fn)
 	print(fn['ta'])
 	print(fn.variables['ta'])
@@ -74,8 +76,8 @@ def process_ncdf_file(chans ):
 	return
 
 
-'''fn3 = netCDF4.Dataset('../../data/raw/100y_10layers.nc', 'r')
-rootgrp = netCDF4.Dataset('../../data/raw/100y_10layers.h5', 'w', format = 'NETCDF4')
+'''fn3 = netCDF4.Dataset('../../data/raw/data_plasim_50.h5', 'r')
+rootgrp = netCDF4.Dataset('../../data/raw/data_plasim_50.h5', 'w', format = 'NETCDF4')
 #fullSimGrp = rootgrp.createGroup('fullSim')
 print('starting...')
 rootgrp = fn3.variables
@@ -87,11 +89,11 @@ print('Done.')
 shape = (15000,81,64,128)
 shift = int(36524*0.5)
 
-chans = 10
-'''
+chans = 10'''
 
-fn = h5.File('../../data/raw/100y_10layers.h5', 'r')
-#fn3 = netCDF4.Dataset('../../data/raw/100y_10layers.h5', 'r')
+
+#fn = h5.File('../../data/raw/data_plasim_50.h5', 'r')
+fn3 = netCDF4.Dataset(nc_file, 'r')
 L3 = list(fn3.keys())
 print(L3)
 L = list(fn.keys())
@@ -103,7 +105,7 @@ for i in L:
     print(i)
 
 
-'''for t in range(6):
+for t in range(6):
 
 	data = np.zeros((5000,81, 64, 128))
 	
@@ -132,9 +134,9 @@ for i in L:
 		hdf5_store = HDF5Store('../../data/raw/100yPlasim_81chans_chunked.h5','X', shape=shape)
 	else:
 		hdf5_store.append(data)
-   '''
+
 data = fn[:]
-'''
+
 
 for i in range(4,12):
     if i==10:
@@ -156,12 +158,4 @@ print('done.')
 print('saving .h5 file.')
 #np.save('../../data/raw/100yPlasim_81chans.h5', data)
 print('data saved .npy file')
-'''
-
-
-
- 
-# test
-
-
 
