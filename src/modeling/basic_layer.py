@@ -61,12 +61,14 @@ class ResidualBlock(object):
         """
         self.kernel_size = kernel_size
 
-    def f_prop(self, _input, input_channels, output_channels=None, scope="residual_block", is_training=True):
+    def f_prop(self, _input, input_channels, output_channels=None,
+               scope="residual_block", is_training=True):
         """
         forward propagation
         :param _input: A Tensor
         :param input_channels: dimension of input channel.
-        :param output_channels: dimension of output channel. input_channel -> output_channel
+        :param output_channels: dimension of output channel. input_channel -> 
+         output_channel
         :param stride: int stride of kernel
         :param scope: str, tensorflow name scope
         :param is_training: boolean, whether training step or not(test step)
@@ -76,20 +78,25 @@ class ResidualBlock(object):
             output_channels = input_channels
 
         with tf.variable_scope(scope):
-            # batch normalization & ReLU TODO(this function should be updated when the TF version changes)
+            # batch normalization & ReLU TODO(this function should be updated
+            # when the TF version changes)
             x = self.batch_norm(_input, input_channels, is_training)
 
-            x = tf.layers.conv2d(x, filters=output_channels, kernel_size=1, padding='SAME', name="conv1")
+            x = tf.layers.conv2d(x, filters=output_channels, kernel_size=1,
+                                 padding='SAME', name="conv1")
 
-            # batch normalization & ReLU TODO(this function should be updated when the TF version changes)
+            # batch normalization & ReLU TODO(this function should be updated
+            # when the TF version changes)
             x = self.batch_norm(x, output_channels, is_training)
 
-            x = tf.layers.conv2d(x, filters=output_channels, kernel_size=self.kernel_size,
+            x = tf.layers.conv2d(x, filters=output_channels,
+                                 kernel_size=self.kernel_size,
                                  strides=1, padding='SAME', name="conv2")
 
             # update input
             if input_channels != output_channels:
-                _input = tf.layers.conv2d(_input, filters=output_channels, kernel_size=1, strides=1)
+                _input = tf.layers.conv2d(_input, filters=output_channels,
+                                          kernel_size=1, strides=1)
 
             output = x + _input
 
@@ -99,7 +106,8 @@ class ResidualBlock(object):
     def batch_norm(x, n_out, is_training=True):
         """
         Batch normalization on convolutional maps.
-        Ref.: http://stackoverflow.com/questions/33949786/how-could-i-use-batch-normalization-in-tensorflow
+        Ref.: http://stackoverflow.com/questions/33949786/how-could-i-use-batch
+              -normalization-in-tensorflow
         Args:
             x:           Tensor, 4D BHWD input maps
             n_out:       integer, depth of input maps
@@ -123,9 +131,11 @@ class ResidualBlock(object):
 
             mean, var = tf.cond(tf.cast(is_training, tf.bool),
                                 mean_var_with_update,
-                                lambda: (ema.average(batch_mean), ema.average(batch_var)))
+                                lambda: (ema.average(batch_mean),
+                                ema.average(batch_var)))
             normed = tf.nn.batch_normalization(x, mean, var, beta, gamma, 1e-3)
         return tf.nn.relu(normed)
+
 
 class _UpSampling(Layer):
     """Abstract nD UpSampling layer (private, used as implementation base).
@@ -205,11 +215,12 @@ class UpSampling2D(_UpSampling):
             `(batch, channels, upsampled_rows, upsampled_cols)`
     """
 
-    #@interfaces.legacy_upsampling2d_support
+    # @interfaces.legacy_upsampling2d_support
     def __init__(self, size=(2, 2), data_format=None, interpolation='nearest',
                  **kwargs):
         normalized_size = conv_utils.normalize_tuple(size, 2, 'size')
-        super(UpSampling2D, self).__init__(normalized_size, data_format, **kwargs)
+        super(UpSampling2D, self).__init__(normalized_size, data_format,
+                                           **kwargs)
         if interpolation not in ['nearest', 'bilinear']:
             raise ValueError('interpolation should be one '
                              'of "nearest" or "bilinear".')
