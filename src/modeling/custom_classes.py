@@ -12,6 +12,7 @@ from keras.models import Model
 from keras.engine import *
 from keras.legacy import interfaces
 from src.modeling.basic_layer import UpSampling2D
+from keras.initializers import RandomNormal
 import numpy as np
 
 
@@ -94,7 +95,7 @@ def nearest_padding(image, padding):
         upper_pad = image[:, :1, :]
         lower_pad = image[:, -1:, :]
         L = [upper_pad, image, lower_pad]
-        for i in range(padding[0] - 1):
+        for _ in range(padding[0]-1):
             L.insert(0, upper_pad)
             L.insert(-1, lower_pad)
 
@@ -104,7 +105,7 @@ def nearest_padding(image, padding):
 
         left_pad = image[:, :, :1]
         right_pad = image[:, :, -1:]
-        for i in range(padding[0] - 1):
+        for _ in range(padding[0]-1):
             L.insert(0, left_pad)
             L.insert(-1, right_pad)
 
@@ -467,7 +468,7 @@ def convolutional_block(X, f, filters, stage, block, s=2):
         kernel_size=(1, 1),
         strides=(s, s),
         padding="valid",
-        name=conv_name_base + "1",
+        name=f"{conv_name_base}1",
         kernel_initializer='glorot_uniform',
     )(X_shortcut)
 
@@ -887,10 +888,7 @@ class _ConvSN(Layer):
         return u, v
 
     def build(self, input_shape):
-        if self.data_format == "channels_first":
-            channel_axis = 1
-        else:
-            channel_axis = -1
+        channel_axis = 1 if self.data_format == "channels_first" else -1
         if input_shape[channel_axis] is None:
             raise ValueError(
                 "The channel dimension of the inputs "
@@ -909,12 +907,10 @@ class _ConvSN(Layer):
 
         # Spectral Normalization
         if self.spectral_normalization:
-            self.u = self.add_weight(
-                shape=tuple([1, self.kernel.shape.as_list()[-1]]),
-                initializer=initializers.RandomNormal(0, 1),
-                name="sn",
-                trainable=False,
-            )
+            self.u = self.add_weight(shape=(1,
+                                            self.kernel.shape.as_list()[-1]),
+                                     initializer=RandomNormal(0, 1),
+                                     name="sn", trainable=False)
 
         if self.use_bias:
             self.bias = self.add_weight(
@@ -1057,10 +1053,7 @@ class _ConvSN(Layer):
 
 class ConvSN2D(Conv2D):
     def build(self, input_shape):
-        if self.data_format == "channels_first":
-            channel_axis = 1
-        else:
-            channel_axis = -1
+        channel_axis = 1 if self.data_format == "channels_first" else -1
         if input_shape[channel_axis] is None:
             raise ValueError(
                 "The channel dimension of the inputs "
@@ -1088,16 +1081,14 @@ class ConvSN2D(Conv2D):
         else:
             self.bias = None
 
-        self.u = self.add_weight(
-            shape=tuple([1, self.kernel.shape.as_list()[-1]]),
-            initializer=initializers.RandomNormal(0, 1),
-            name="sn",
-            trainable=False,
-        )
+        self.u = self.add_weight(shape=(1, self.kernel.shape.as_list()[-1]),
+                                 initializer=RandomNormal(0, 1),
+                                 name="sn", trainable=False)
 
         # Set input spec.
         self.input_spec = InputSpec(ndim=self.rank + 2,
                                     axes={channel_axis: input_dim})
+        self.built = True
         self.built = True
 
     def call(self, inputs, training=None):
@@ -1146,10 +1137,7 @@ class ConvSN2D(Conv2D):
 
 class ConvSN1D(Conv1D):
     def build(self, input_shape):
-        if self.data_format == "channels_first":
-            channel_axis = 1
-        else:
-            channel_axis = -1
+        channel_axis = 1 if self.data_format == "channels_first" else -1
         if input_shape[channel_axis] is None:
             raise ValueError(
                 "The channel dimension of the inputs "
@@ -1177,12 +1165,10 @@ class ConvSN1D(Conv1D):
         else:
             self.bias = None
 
-        self.u = self.add_weight(
-            shape=tuple([1, self.kernel.shape.as_list()[-1]]),
-            initializer=initializers.RandomNormal(0, 1),
-            name="sn",
-            trainable=False,
-        )
+        self.u = self.add_weight(shape=(1, self.kernel.shape.as_list()[-1]),
+                                 initializer=initializers.RandomNormal(0, 1),
+                                 name="sn", trainable=False)
+
         # Set input spec.
         self.input_spec = InputSpec(ndim=self.rank + 2,
                                     axes={channel_axis: input_dim})
@@ -1234,10 +1220,7 @@ class ConvSN1D(Conv1D):
 
 class ConvSN3D(Conv3D):
     def build(self, input_shape):
-        if self.data_format == "channels_first":
-            channel_axis = 1
-        else:
-            channel_axis = -1
+        channel_axis = 1 if self.data_format == "channels_first" else -1
         if input_shape[channel_axis] is None:
             raise ValueError(
                 "The channel dimension of the inputs "
@@ -1254,12 +1237,9 @@ class ConvSN3D(Conv3D):
             constraint=self.kernel_constraint,
         )
 
-        self.u = self.add_weight(
-            shape=tuple([1, self.kernel.shape.as_list()[-1]]),
-            initializer=initializers.RandomNormal(0, 1),
-            name="sn",
-            trainable=False,
-        )
+        self.u = self.add_weight(shape=(1, self.kernel.shape.as_list()[-1]),
+                                 initializer=RandomNormal(0, 1),
+                                 name="sn", trainable=False)
 
         if self.use_bias:
             self.bias = self.add_weight(
@@ -1331,12 +1311,10 @@ class EmbeddingSN(Embedding):
             dtype=self.dtype,
         )
 
-        self.u = self.add_weight(
-            shape=tuple([1, self.embeddings.shape.as_list()[-1]]),
-            initializer=initializers.RandomNormal(0, 1),
-            name="sn",
-            trainable=False,
-        )
+        self.u = self.add_weight(shape=(1,
+                                        self.embeddings.shape.as_list()[-1]),
+                                 initializer=RandomNormal(0, 1), name="sn",
+                                 trainable=False)
 
         self.built = True
 
@@ -1382,10 +1360,7 @@ class ConvSN2DTranspose(Conv2DTranspose):
                 "Inputs should have rank 4; Received input shape:",
                 str(input_shape),
             )
-        if self.data_format == "channels_first":
-            channel_axis = 1
-        else:
-            channel_axis = -1
+        channel_axis = 1 if self.data_format == "channels_first" else -1
         if input_shape[channel_axis] is None:
             raise ValueError(
                 "The channel dimension of the inputs "
@@ -1412,12 +1387,9 @@ class ConvSN2DTranspose(Conv2DTranspose):
         else:
             self.bias = None
 
-        self.u = self.add_weight(
-            shape=tuple([1, self.kernel.shape.as_list()[-1]]),
-            initializer=initializers.RandomNormal(0, 1),
-            name="sn",
-            trainable=False,
-        )
+        self.u = self.add_weight(shape=(1, self.kernel.shape.as_list()[-1]),
+                                 initializer=RandomNormal(0, 1), name="sn",
+                                 trainable=False)
 
         # Set input spec.
         self.input_spec = InputSpec(ndim=4, axes={channel_axis: input_dim})
@@ -1647,13 +1619,11 @@ def ResBlock(
 
     if sampling == "up":
         res_block_1 = UpSampling2D()(res_block_1)
-    else:
-        pass
 
     if spectral_normalization:
-        res_block_1 = cc.WrapPadding2D(padding=(0, 1))(res_block_1)
-        res_block_1 = cc.NearestPadding2D(padding=(1, 0))(res_block_1)
-        res_block_1 = cc.ConvSN2D(
+        res_block_1 = WrapPadding2D(padding=(0, 1))(res_block_1)
+        res_block_1 = NearestPadding2D(padding=(1, 0))(res_block_1)
+        res_block_1 = ConvSN2D(
             channels,
             k_size,
             strides=1,
@@ -1662,8 +1632,8 @@ def ResBlock(
         )(res_block_1)
 
     else:
-        res_block_1 = cc.WrapPadding2D(padding=(0, 1))(res_block_1)
-        res_block_1 = cc.NearestPadding2D(padding=(1, 0))(res_block_1)
+        res_block_1 = WrapPadding2D(padding=(0, 1))(res_block_1)
+        res_block_1 = NearestPadding2D(padding=(1, 0))(res_block_1)
         res_block_1 = Conv2D(
             channels,
             k_size,
@@ -1704,8 +1674,6 @@ def ResBlock(
 
     if sampling == "down":
         res_block_2 = AveragePooling2D()(res_block_2)
-    else:
-        pass
 
     if sampling == "up":
         short_cut = UpSampling2D()(res_block_input)
@@ -1716,7 +1684,7 @@ def ResBlock(
 
     if trainable_sortcut:
         if spectral_normalization:
-            short_cut = cc.ConvSN2D(
+            short_cut = ConvSN2D(
                 channels,
                 1,
                 strides=1,

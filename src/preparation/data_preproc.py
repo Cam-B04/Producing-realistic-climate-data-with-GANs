@@ -32,7 +32,7 @@ def dataExtraction_puma(DB_path="", DB_name="", im_shape=(64, 128, 5)):
 def dataPreparationPuma(DB_path="", DB_name="", im_shape=(64, 128, 81)):
     """
     Returns a .h5 file with standardized data and the means and stds used for
-    the standardization. 
+    the standardization.
     """
     rows = im_shape[0]
     cols = im_shape[1]

@@ -5,9 +5,8 @@ base models of Residual Attention Network
 
 import tensorflow as tf
 from keras.utils import conv_utils
-from keras import backend as K 
-from keras.layers import InputSpec 
-from keras.legacy import interfaces
+from keras import backend as K
+from keras.layers import InputSpec
 from keras.utils.generic_utils import transpose_shape
 
 
@@ -67,7 +66,7 @@ class ResidualBlock(object):
         forward propagation
         :param _input: A Tensor
         :param input_channels: dimension of input channel.
-        :param output_channels: dimension of output channel. input_channel -> 
+        :param output_channels: dimension of output channel. input_channel ->
          output_channel
         :param stride: int stride of kernel
         :param scope: str, tensorflow name scope
@@ -98,9 +97,7 @@ class ResidualBlock(object):
                 _input = tf.layers.conv2d(_input, filters=output_channels,
                                           kernel_size=1, strides=1)
 
-            output = x + _input
-
-            return output
+            return x + _input
 
     @staticmethod
     def batch_norm(x, n_out, is_training=True):
@@ -240,5 +237,3 @@ class UpSampling2D(_UpSampling):
         if hasattr(self, '_outbound_nodes'):
             print("outbound_nodes called but _outbound_nodes found")
         return getattr(self, '_outbound_nodes', [])
-
-
