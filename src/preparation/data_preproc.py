@@ -5,7 +5,35 @@ import numpy as np
 import h5py as h5
 import copy as cp
 
-def dataExtraction_puma(DB_path='', DB_name = '', im_shape = (64,128,81)):
+
+def dataExtraction_puma(DB_path='', DB_name = '', im_shape = (64,128,5)):
+    '''
+    Data extraction sum of sizes has to be inferior to DB_size/3.
+    Flages : pattern : -1 => CHAN, 0 => FAULT, 1 => LOBE 
+    2 different dataset original one and one with morphology operation applied (not working)
+    '''
+    rows = im_shape[0]
+    cols = im_shape[1]
+    chans = im_shape[2]
+    scaling = np.zeros((chans, 2))  # contain mean and var for the 4 chans
+    DB_size = 3*365
+    print('Size of the DB : ',DB_size)
+    DB_images=np.ones((DB_size, rows, cols, chans))
+
+    f=h5.File(DB_path,'r')
+    
+    f[DB_name].read_direct(DB_images)
+
+    print('Dataset used : 1095 images 81 channels - 3y simulation')
+    for chan in range(chans):
+        DB_images[:,:,:,chan],scaling[chan,0],scaling[chan,1] = scale2(DB_images[:,:,:,chan])
+        inter = DB_images[:,:,:,chan]
+    f.close()
+
+    return DB_images,scaling
+
+
+def dataPreparationPuma(DB_path='', DB_name = '', im_shape = (64,128,81)):
     '''
     '''
     rows = im_shape[0]
@@ -42,15 +70,11 @@ def dataExtraction_puma(DB_path='', DB_name = '', im_shape = (64,128,81)):
 
 
 def scale2(X):
-    print(X.shape)
     mean = np.mean(X)
-    print('mean:',mean)
-    X=(X[:]-mean)
+    X = (X[:]-mean)
     m = np.std(X)
-    print('m :',m)
-    X1=X[:]/m
-    #if np.max(np.abs(X1))>1.01 :
-        #print('mauvaise scaling!!!!!!!!')
+    X1 = X[:]/m
+
     return X1,mean,m
 
 

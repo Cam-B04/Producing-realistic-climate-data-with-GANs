@@ -1,78 +1,36 @@
 import numpy as np
-
-import tensorflow as tf 
-##############Memory managment###############
-
-
-#Setting for memory allocaton of the GPU. 
-from keras.backend.tensorflow_backend import set_session
-config = tf.ConfigProto()
-config.gpu_options.per_process_gpu_memory_fraction = 0.98
-config.gpu_options.allow_growth = True
-config.gpu_options.visible_device_list = str(2)
-set_session(tf.Session(config=config))
-
-
 import keras.layers.merge
 from keras.optimizers import Adam
-
-from keras.layers import Input, ZeroPadding2D, Lambda, Layer, Dense, Reshape,BatchNormalization,Input,Dropout ,Dense, Lambda, Conv2D, MaxPooling2D
-from keras.layers import Flatten,Conv2DTranspose,Activation, Cropping2D, merge
-from keras.layers.advanced_activations import LeakyReLU
-
-
+from keras.layers import Input, Dense, Reshape, BatchNormalization, Input, Dense, Conv2D, MaxPooling2D
+from keras.layers import Flatten, Conv2DTranspose, Activation
 from keras.models import Model
 import keras.backend as K
 import os
-
-
-from tensorflow.python.keras.layers.merge import _Merge
-
-from keras.models import Sequential, Model
-from keras.optimizers import RMSprop, Adam, SGD
+from keras.models import Model
+from keras.optimizers import Adam
 from functools import partial
 from keras.models import Model
 from keras import backend as K
-from keras import metrics,regularizers
-from keras.losses import mse, binary_crossentropy, kullback_leibler_divergence,mae
-from keras.datasets import mnist
+from keras import regularizers
 import h5py as h5
-import copy as cp
 import keras
-from datetime import datetime as dt
-import time
-import matplotlib.pyplot as plt
 import numpy as np
 from pandas import DataFrame, Series
 import sys
-from keras.initializers import RandomNormal
-import matplotlib.pyplot as plt
-from scipy.stats import norm
 import os.path
 import sys
-#from GPyOpt.experiment_design import initial_design
-import sklearn as skl
-import sys
-
-
-import datetime 
-
-#from ..legacy import interfaces
-import scipy.spatial as ss
-import scipy.stats as sst
-import scipy.io as sio
-from scipy.special import beta,digamma,gamma
-from sklearn.neighbors import KernelDensity
-from math import log,pi,exp
-import numpy.random as nr
 import numpy as np
-import random
-import time
-import matplotlib.pyplot as plt
-#from cvxopt import matrix,solvers
-import pandas as pd
-
 import numpy as np
+import tensorflow as tf 
+from keras.backend.tensorflow_backend import set_session
+##############Memory managment###############
+# Setting for memory allocaton of the GPU. 
+config = tf.ConfigProto()
+config.gpu_options.per_process_gpu_memory_fraction = 0.8
+config.gpu_options.allow_growth = True
+# config.gpu_options.visible_device_list = str(2)
+set_session(tf.Session(config=config))
+
 
 colortest=['k','0.80','0.60','0.40','0.20']
 
@@ -84,17 +42,7 @@ from functools import partial
 sys.path.append('./src/modeling')
 from SpectralNormalizationKeras import *
 from custom_classes import *
-#from basic_layer import UpSampling2D
-'''class RandomWeightedAverage(keras.layers.merge._Merge):
-    """Provides a (random) weighted average between real and generated image samples"""
 
-    def __init__(self, batch_size=32, **kwargs):
-        super().__init__(**kwargs)
-        self.bs = batch_size
-
-    def _merge_function(self, inputs):
-        alpha = K.random_uniform((self.bs, 1, 1, 1))
-        return (alpha * inputs[0]) + ((1 - alpha) * inputs[1])'''
 
 class RandomWeightedAverage(keras.layers.merge._Merge):
     """Provides a (random) weighted average between real and generated image samples"""
@@ -221,7 +169,8 @@ class WGANGP(object):
 
     def __init__(self, latent_dim=128, target_shape=(64, 128, 22), batch_size=32,
                  optimizerG=None, optimizerC=None, summary=False, n_critic=5,
-                 models=None, weights_path = None, first_epoch = 0, gradient_penalty=10, data=None, tfboard = False):
+                 models=None, weights_path = None, first_epoch = 0, gradient_penalty=10,
+                 data=None, tfboard = False):
 
         # If models are given then extract information from them.
         # models == [generator, critic]
@@ -230,7 +179,6 @@ class WGANGP(object):
             self.generator, self.critic = models[0], models[1]
             latent_dim = self.generator.input_shape[1]
             target_shape = self.generator.output_shape[1:]
-            #print('bouuuuuuuuuuucle')
 
         self.data = data
         self.tfboard = tfboard
@@ -303,7 +251,6 @@ class WGANGP(object):
         conv = Reshape((8,8,1))(noise)
         conv = WrapPadding2D((0,4))(conv)
 
-        
         conv =  Conv2DTranspose(256, (5,5),   padding = padd,kernel_initializer=init,kernel_regularizer=regularizers.l2(reg_dec),#Achanger !!
             activity_regularizer=regularizers.l2( reg_dec))(conv)
         #conv =  BatchNormalization(momentum=0.99)(conv)
@@ -758,35 +705,31 @@ class WGANGP(object):
         return K.mean(y_true * y_pred)
 
     def _targets_generator(self, **kwargs):
-        import sys
         """
         Return a batch of real data of size:
         self.batch_size * self.n_critic
         """
-        #dset = np.load('/scratch/coop/besombes/Puma_Project/data/raw/x_train_22c_scaled')
-        f=h5.File('./data/raw/T42_plasim_100y_10lay_scaled.h5','r')
-        #dset = self.data
-        #f['data_puma_v1'].read_direct(DB_images)
+
+        f=h5.File('./data/raw/data_plasim_3y_sc.h5','r')
         dset = f['dataset']
-        lat = np.load('./data/raw/llat.npy')
-        lat = np.expand_dims(lat, axis = 0)
-        lat = np.expand_dims(lat, axis = -1)
-        lat = lat.repeat(self.batch_size * self.n_critic, axis = 0)
+        # lat = np.load('./data/raw/llat.npy')
+        lat = np.genfromtxt("./data/raw/lat.csv", delimiter=',') # shape : (64)
+        print(lat,lat.shape)
+        llat = np.expand_dims(lat, axis = 0)                        # shape : (1, 64)
+        llat = np.expand_dims(llat, axis = -1)                      # shape : (1, 64, 1)
+        llat = np.expand_dims(llat, axis = -1)                      # shape : (1, 64, 1, 1)
+        #llat = llat.repeat(N_train, axis = 0)
+        llat = llat.repeat(128, axis = 2)                           # shape : (1, 64, 128, 1)
+        llat = llat.repeat(self.batch_size * self.n_critic, axis = 0) # shape : (batch*n_crit, 64, 128, 1)
         Lidx = np.arange(0, dset.shape[0])
         while True:
             idx = []
-            #for i in range(self.batch_size * self.n_critic):
-            #while len(idx)!= self.batch_size * self.n_critic:
-            #    r = np.random.randint(10800, dset.shape[0] )
-            #    if r not in idx: idx.append(r)
             np.random.shuffle(Lidx)
             idx = np.sort(Lidx[:self.batch_size * self.n_critic])
             idx = np.sort(idx)
-            real_targets = dset[idx,:,:,:]
-            #real_targets = np.swapaxes(real_targets,1,2)
-            #real_targets = np.swapaxes(real_targets,2,3)
-            #print(sys.getsizeof(real_targets))
-            yield np.concatenate((real_targets, lat), axis = 3)
+            real_targets = self.data[idx,:,:,:]
+            print(lat.shape, real_targets.shape)
+            yield np.concatenate((real_targets, llat), axis = 3)
 
     def _train_learning_rate(self, epoch, d_loss, g_loss):
         if epoch % 1500 == 0 and epoch > 1500:  # Learning rate modification
@@ -797,7 +740,9 @@ class WGANGP(object):
             lrate = initial_lrate * 0.9
             K.set_value(self.generator_model.optimizer.lr, lrate)
 
-    def train(self, epochs, save_interval=None, save_file='name_save', run_number = '-1', log_file='wgan.log', log_interval=10, data_generator=None, save_intermediate_model=False, **kwargs):
+    def train(self, epochs, save_interval=None, save_file='name_save', 
+              run_name = '-1', log_file='wgan.log', log_interval=10,
+              data_generator=None, save_intermediate_model=False, **kwargs):
 
         self.history = { 'generator': [],
                      'critic': [],
@@ -805,7 +750,7 @@ class WGANGP(object):
 
         # Load the dataset
         # X_train = self._load_data(**kwargs) #dataExtraction_puma(morph=False)
-        self.run_number = run_number
+        self.run_name = run_name
         # Adversarial ground truths
         positive_ones = np.ones((self.batch_size, 1))
         negative_ones = -positive_ones
@@ -824,13 +769,11 @@ class WGANGP(object):
         loss_hist_g = np.zeros((epochs,1))
         loss_hist_d = np.zeros((epochs,4))
 
-        with open(log_file, 'w') as log_file:
+        with open(f'./log_dir/{log_file}', 'w') as log_file:
 
             self.fakes = {}
 
             for epoch, real_targets_minibatches in zip(range(self.first_epoch,epochs), data_generator):
-
-                
 
                 # ---------------------
                 # -1- Compute the Wasserstein distance by maximizing the critic
@@ -843,13 +786,11 @@ class WGANGP(object):
                     # Sample generator input
                     latent_samples = np.random.normal(size=(self.batch_size, self.latent_dim))
 
-                    #print('Before d_loss')
                     # Train the critic
                     d_loss = self.critic_model.train_on_batch(
                                             [real_targets, latent_samples],
                                             [positive_ones, negative_ones, dummy])
                             # [negative_ones, positive_ones, dummy]) --> formulation article
-                    #print('After d_loss')
                 # ---------------------
                 # -2- Minmizing the Wasserstein distance
                 #     i.e. Train Generator
@@ -859,8 +800,6 @@ class WGANGP(object):
                 # The objective is to force the model to produce realistic outputs:
                 # The critics of the generated samples should be $1$ meaning the critic considers
                 # the generated states as realistic ones.
-                #
-                #print('Before g_loss')
                 g_loss = self.generator_model.train_on_batch(latent_samples,
                                                          positive_ones)
                 self._train_learning_rate(epoch, d_loss, g_loss)
@@ -877,15 +816,6 @@ class WGANGP(object):
                     if self.tfboard :
                         loss_summary = tf.Summary(value=[tf.Summary.Value(tag="Wasserstein_loss", 
                                                          simple_value=d_loss[1]-g_loss), ])
-                        #lr_summary = tf.Summary(value=[tf.Summary.Value(tag="lr", 
-                        #                                 simple_value=self.critic_model.optimizer.lr.eval()), ])
-            
-                        #g_img = self.generator.predict(noise)
-                        #image_summary = tf.Summary(value=[tf.Summary.Image(tag="first gen", 
-                        #                                 Image=g_img[0,:,:,0]), ])
-                        #log_dir.add_summary([loss_summary] , epoch)
-                        
-        
                         # Diagnosis of models & intermediate saving
         
                         self.history['generator'].append(g_loss)
@@ -901,19 +831,18 @@ class WGANGP(object):
                     self.save_fakes(out_file, fakes,epoch)
                     if save_intermediate_model:
                         self.save_model_cam(out_file)
-                    np.save( './log_dir/'+str(self.run_number)+'/loss_hist_d',loss_hist_d)
-                    np.save( './log_dir/'+str(self.run_number)+'/loss_hist_g',loss_hist_g)
+                    np.save(f'./log_dir/{str(self.run_name)}/loss_hist_d',loss_hist_d)
+                    np.save(f'./log_dir/{str(self.run_name)}/loss_hist_g',loss_hist_g)
         return
 
     def create_logdir(self):
         import shutil
         import tensorflow as tf
-        my_log_dir = './log_dir/'+str(self.run_number)+'/'
+        my_log_dir =f'./log_dir/{str(self.run_name)}/'
         train_log_dir = os.path.join(my_log_dir, 'training/')
         val_log_dir = os.path.join(my_log_dir, 'validation/')
         if os.path.exists(os.path.dirname(my_log_dir)):
             response = input(my_log_dir + " already exists ! 'del' or 'stop' ? ")
-            
             if response == 'del':
                 shutil.rmtree(my_log_dir)
             else:
@@ -923,7 +852,7 @@ class WGANGP(object):
             os.makedirs(os.path.dirname(train_log_dir))
             os.makedirs(os.path.dirname(val_log_dir))
 
-        save_dir = './save_model/'+str(self.run_number)+'/'
+        save_dir =f'./save_model/{str(self.run_name)}/'
         if os.path.exists(os.path.dirname(save_dir)):
             for file in os.listdir(save_dir):
                 file_path = os.path.join(save_dir, file)
