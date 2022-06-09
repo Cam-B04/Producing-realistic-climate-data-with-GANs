@@ -1,8 +1,7 @@
-def training_test():
+def loading_database():
     # ############IMPORT##########################
     import tensorflow as tf
     from keras.backend.tensorflow_backend import set_session
-    from src.modeling import wgan_gp_V8_82c as wg
     from src.preparation import data_preproc as preproc
 
     # Setting for memory allocaton of the GPU.
@@ -16,12 +15,48 @@ def training_test():
         DB_path='./data/raw/data_plasim_3y_sc.h5',
         DB_name='dataset', im_shape=(64, 128, 81)
         )
+    return
 
+
+def init_wgan():
+    import numpy as np
+    import sys
+    sys.path.append('./src/modeling')
+    import wgan_gp_V8_82c as wg
+
+    X_train = np.zeros((2, 64, 128, 81))
     wgan = wg.WGANGP(latent_dim=64, target_shape=(64, 128, 82), batch_size=2,
                      optimizerG=None, optimizerC=None, summary=True,
                      n_critic=1, models=None, gradient_penalty=10,
-                     data=X_train[:100, :, :, :], tfboard=False)
+                     data=X_train, tfboard=False)
+    return
 
-    wgan.train(epochs=5, save_interval=4, save_file='test',
+
+def training_wgan():
+    import numpy as np
+    import sys
+    sys.path.append('./src/modeling')
+    import wgan_gp_V8_82c as wg
+
+    X_train = np.zeros((2, 64, 128, 81))
+    wgan = wg.WGANGP(latent_dim=64, target_shape=(64, 128, 82), batch_size=2,
+                     optimizerG=None, optimizerC=None, summary=True,
+                     n_critic=1, models=None, gradient_penalty=10,
+                     data=X_train, tfboard=False)
+
+    wgan.train(epochs=2, save_interval=1, save_file='test',
                run_name='run_test', log_interval=10, log_file='test',
                data_generator=None, save_intermediate_model=True)
+    return
+
+
+def test_loading_database():
+    assert loading_database() is None
+
+
+def test_init_wgan():
+    assert init_wgan() is None
+
+
+def test_training_wgan():
+    assert training_wgan() is None

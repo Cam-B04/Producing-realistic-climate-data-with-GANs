@@ -15,7 +15,6 @@ from keras.initializers import RandomNormal
 import numpy as np
 import sys
 sys.path.append('../src/modeling')
-from basic_layer import UpSampling2D
 
 
 def periodic_padding(image, padding):
@@ -1605,6 +1604,7 @@ def ResBlock(
                 None for none
 
     """
+    from basic_layer import UpSampling2D
     # input_shape = input_layer.sahpe.as_list()
 
     res_block_input = Input(shape=input_shape)
