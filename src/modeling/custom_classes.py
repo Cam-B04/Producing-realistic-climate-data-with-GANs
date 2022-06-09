@@ -11,9 +11,11 @@ from keras.layers.pooling import _GlobalPooling2D
 from keras.models import Model
 from keras.engine import *
 from keras.legacy import interfaces
-from src.modeling.basic_layer import UpSampling2D
 from keras.initializers import RandomNormal
 import numpy as np
+import sys
+sys.path.append('../src/modeling')
+from basic_layer import UpSampling2D
 
 
 def periodic_padding(image, padding):
