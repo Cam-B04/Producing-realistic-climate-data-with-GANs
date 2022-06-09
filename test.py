@@ -1,24 +1,18 @@
 def loading_database():
-    # ############IMPORT##########################
-    import tensorflow as tf
-    from keras.backend.tensorflow_backend import set_session
+    '''Checks if the database loading steps works'''
     from src.preparation import data_preproc as preproc
+    import os
 
-    # Setting for memory allocaton of the GPU.
-    config = tf.ConfigProto()
-    config.gpu_options.per_process_gpu_memory_fraction = 0.8
-    config.gpu_options.allow_growth = True
-    set_session(tf.Session(config=config))
-    sess = tf.Session()
-
-    X_train, scaling = preproc.dataExtraction_puma(
-        DB_path='./data/raw/data_plasim_3y_sc.h5',
-        DB_name='dataset', im_shape=(64, 128, 81)
-        )
+    if os.path.exists('./data/raw/data_plasim_3y_sc.h5'):
+        X_train, scaling = preproc.dataExtraction_puma(
+            DB_path='./data/raw/data_plasim_3y_sc.h5',
+            DB_name='dataset', im_shape=(64, 128, 81)
+            )
     return
 
 
 def init_wgan():
+    '''Checks if the WGAN initialization steps works with fake database'''
     import numpy as np
     import sys
     sys.path.append('./src/modeling')
@@ -33,10 +27,20 @@ def init_wgan():
 
 
 def training_wgan():
+    '''Checks if the WGAN training step works. 2 iterations on fake data.'''
     import numpy as np
     import sys
+    import tensorflow as tf
+    from keras.backend.tensorflow_backend import set_session
     sys.path.append('./src/modeling')
     import wgan_gp_V8_82c as wg
+
+    # Setting for memory allocaton of the GPU.
+    config = tf.ConfigProto()
+    config.gpu_options.per_process_gpu_memory_fraction = 0.8
+    config.gpu_options.allow_growth = True
+    set_session(tf.Session(config=config))
+    sess = tf.Session()
 
     X_train = np.zeros((2, 64, 128, 81))
     wgan = wg.WGANGP(latent_dim=64, target_shape=(64, 128, 82), batch_size=2,
